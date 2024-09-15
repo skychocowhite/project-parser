@@ -23,18 +23,19 @@ dependencies {
 
     // This dependency is used by the application.
     implementation libs.guava
+    implementation 'com.github.javaparser:javaparser-core:3.26.2'
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(22)
     }
 }
 
 application {
     // Define the main class for the application.
-    mainClass = 'java.project.parser.App'
+    mainClass = 'com.project.parser.App'
 }
 
 tasks.named('test') {
