@@ -1,0 +1,27 @@
+# Gradle files
+.gradle/
+build/
+out/
+
+# Logs and temp files
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+.DS_Store
+
+# IDE files (VSCode, IntelliJ, etc.)
+.vscode/
+.idea/
+*.iml
+
+# Other
+.classpath
+.project
+.settings/
+.factorypath
+
+# OS Files
+Thumbs.db
+.DS_Store
