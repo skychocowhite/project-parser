@@ -6,7 +6,6 @@ import java.util.NoSuchElementException;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.visitor.VoidVisitor;
 
@@ -25,18 +24,6 @@ public class CodeParser {
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
-        }
-    }
-
-    public static void printNodeStructure(Node node, int depth) {
-        for (int i = 1; i <= depth; ++i) {
-            System.out.print("  ");
-        }
-
-        System.out.println(node.getClass().getSimpleName() + ": " + node);
-
-        for (Node child : node.getChildNodes()) {
-            printNodeStructure(child, depth + 1);
         }
     }
 

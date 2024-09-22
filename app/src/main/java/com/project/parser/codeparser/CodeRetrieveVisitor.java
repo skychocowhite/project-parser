@@ -111,7 +111,6 @@ import com.github.javaparser.ast.type.VoidType;
 import com.github.javaparser.ast.type.WildcardType;
 import com.github.javaparser.ast.visitor.Visitable;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -157,6 +156,7 @@ public class CodeRetrieveVisitor extends VoidVisitorAdapter<StringBuilder> {
             StringBuilder codeBuilder) {
         for (AnnotationExpr annotation : annotations) {
             annotation.accept(this, codeBuilder);
+            codeBuilder.append(" ");
         }
     }
 
@@ -747,18 +747,8 @@ public class CodeRetrieveVisitor extends VoidVisitorAdapter<StringBuilder> {
      */
     @Override
     public void visit(NodeList list, StringBuilder codeBuilder) {
-        if (list.isNonEmpty() && list.get(0) instanceof ImportDeclaration) {
-            NodeList<ImportDeclaration> modifiableList = new NodeList<>(list);
-            modifiableList.sort(
-                    Comparator.comparingInt((ImportDeclaration decl) -> decl.isStatic() ? 0 : 1)
-                            .thenComparing(NodeWithName::getNameAsString));
-            for (Object node : modifiableList) {
-                ((Node) node).accept(this, codeBuilder);
-            }
-        } else {
-            for (Object node : list) {
-                ((Node) node).accept(this, codeBuilder);
-            }
+        for (Object node : list) {
+            ((Node) node).accept(this, codeBuilder);
         }
     }
 
@@ -1238,7 +1228,7 @@ public class CodeRetrieveVisitor extends VoidVisitorAdapter<StringBuilder> {
     @Override
     public void visit(CastExpr castExpr, StringBuilder codeBuilder) {
         codeBuilder.append("(");
-        castExpr.accept(this, codeBuilder);
+        castExpr.getType().accept(this, codeBuilder);
         codeBuilder.append(")");
 
         castExpr.getExpression().accept(this, codeBuilder);
