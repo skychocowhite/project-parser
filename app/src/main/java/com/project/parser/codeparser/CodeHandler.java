@@ -21,8 +21,8 @@ public class CodeHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(CodeHandler.class);
 
-
     private String savePath;
+    private int nodeId;
 
     public CodeHandler(String savePath) {
         File saveRoot = new File(savePath);
@@ -33,6 +33,7 @@ public class CodeHandler {
         }
 
         this.savePath = savePath;
+        this.nodeId = 0;
     }
 
     public void printNodeStructure(Node node, int depth) {
@@ -118,7 +119,7 @@ public class CodeHandler {
     }
 
     public void saveAST(Node cu, String filePath) throws IOException {
-        NodeJson jsonFile = convertNodeToJson(cu, 0);
+        NodeJson jsonFile = convertNodeToJson(cu);
 
         ObjectMapper mapper = new ObjectMapper();
 
@@ -143,13 +144,13 @@ public class CodeHandler {
         }
     }
 
-    private NodeJson convertNodeToJson(Node node, int id) {
+    private NodeJson convertNodeToJson(Node node) {
         String code = node.toString();
-        NodeJson json = new NodeJson(node.getClass().getSimpleName() + "-" + id,
+        NodeJson json = new NodeJson(node.getClass().getSimpleName() + "-" + this.nodeId++,
                 node.getClass().getSimpleName(), code);
 
         for (Node child : node.getChildNodes()) {
-            json.addNode(convertNodeToJson(child, ++id));
+            json.addNode(convertNodeToJson(child));
         }
 
         return json;
