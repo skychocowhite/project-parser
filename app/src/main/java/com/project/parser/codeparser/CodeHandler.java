@@ -118,7 +118,7 @@ public class CodeHandler {
     }
 
     public void saveAST(Node cu, String filePath) throws IOException {
-        NodeJson jsonFile = convertNodeToJson(cu);
+        NodeJson jsonFile = convertNodeToJson(cu, 0);
 
         ObjectMapper mapper = new ObjectMapper();
 
@@ -143,23 +143,26 @@ public class CodeHandler {
         }
     }
 
-    private NodeJson convertNodeToJson(Node node) {
+    private NodeJson convertNodeToJson(Node node, int id) {
         String code = node.toString();
-        NodeJson json = new NodeJson(node.getClass().getSimpleName(), code);
+        NodeJson json = new NodeJson(node.getClass().getSimpleName() + "-" + id,
+                node.getClass().getSimpleName(), code);
 
         for (Node child : node.getChildNodes()) {
-            json.addNode(convertNodeToJson(child));
+            json.addNode(convertNodeToJson(child, ++id));
         }
 
         return json;
     }
 
     public static class NodeJson {
+        private String id;
         private String nodeType;
         private String code;
         private List<NodeJson> children;
 
-        public NodeJson(String nodeType, String code) {
+        public NodeJson(String id, String nodeType, String code) {
+            this.id = id;
             this.nodeType = nodeType;
             this.code = code;
             this.children = new LinkedList<>();
@@ -167,6 +170,10 @@ public class CodeHandler {
 
         public void addNode(NodeJson child) {
             this.children.add(child);
+        }
+
+        public String getId() {
+            return id;
         }
 
         public String getNodeType() {
