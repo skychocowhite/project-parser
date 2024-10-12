@@ -21,6 +21,7 @@ out/
 .project
 .settings/
 .factorypath
+bin/
 
 # OS Files
 Thumbs.db
