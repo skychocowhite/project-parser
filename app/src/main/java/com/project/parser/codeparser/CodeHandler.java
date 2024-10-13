@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.javaparser.Range;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.comments.Comment;
@@ -100,7 +101,7 @@ public class CodeHandler {
         }
     }
 
-    private void parseFile(String filePath, String saveFileName) {
+    private void parseFile(String filePath, String saveFileName) throws IOException {
         CompilationUnit cu;
 
         try {
@@ -108,13 +109,16 @@ public class CodeHandler {
             cu = CodeParser.parseFile(filePath);
             cu.getAllComments().forEach(Comment::remove);
 
+            // Parse again to get the new line number for each nodes
+            cu = CodeParser.parseCode(cu.toString());
+
             // Check our visitor works correctly
             CodeParser.retrieveCode(cu);
-
             logger.info("Save file to {}", saveFileName);
             saveAST(cu, saveFileName);
         } catch (Exception e) {
             e.printStackTrace();
+            throw e;
         }
     }
 
@@ -147,7 +151,7 @@ public class CodeHandler {
     private NodeJson convertNodeToJson(Node node) {
         String code = node.toString().replaceAll("[\r\n]+$", "");
         NodeJson json = new NodeJson(node.getClass().getSimpleName() + "-" + this.nodeId++,
-                node.getClass().getSimpleName(), code);
+                node.getClass().getSimpleName(), code, node.getRange().orElse(null));
 
         for (Node child : node.getChildNodes()) {
             json.addNode(convertNodeToJson(child));
@@ -161,12 +165,14 @@ public class CodeHandler {
         private String nodeType;
         private String code;
         private List<NodeJson> children;
+        private Range range;
 
-        public NodeJson(String id, String nodeType, String code) {
+        public NodeJson(String id, String nodeType, String code, Range range) {
             this.id = id;
             this.nodeType = nodeType;
             this.code = code;
             this.children = new LinkedList<>();
+            this.range = range;
         }
 
         public void addNode(NodeJson child) {
@@ -187,6 +193,10 @@ public class CodeHandler {
 
         public List<NodeJson> getChildren() {
             return children;
+        }
+
+        public Range getRange() {
+            return range;
         }
     }
 }

@@ -18,9 +18,20 @@ public class CodeParser {
         try {
             ParserConfiguration parserConf = new ParserConfiguration();
             parserConf.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_14);
-
             JavaParser javaParser = new JavaParser(parserConf);
             return javaParser.parse(Paths.get(fileName)).getResult().orElseThrow();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    public static CompilationUnit parseCode(String code) throws NoSuchElementException {
+        try {
+            ParserConfiguration parserConf = new ParserConfiguration();
+            parserConf.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_14);
+            JavaParser javaParser = new JavaParser(parserConf);
+            return javaParser.parse(code).getResult().orElseThrow();
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
