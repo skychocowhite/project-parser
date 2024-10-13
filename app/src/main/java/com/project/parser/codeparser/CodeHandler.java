@@ -145,7 +145,7 @@ public class CodeHandler {
     }
 
     private NodeJson convertNodeToJson(Node node) {
-        String code = node.toString();
+        String code = node.toString().replaceAll("[\r\n]+$", "");
         NodeJson json = new NodeJson(node.getClass().getSimpleName() + "-" + this.nodeId++,
                 node.getClass().getSimpleName(), code);
 
