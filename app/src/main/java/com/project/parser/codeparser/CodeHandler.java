@@ -12,10 +12,13 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.javaparser.Position;
 import com.github.javaparser.Range;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.comments.Comment;
+import com.github.javaparser.ast.expr.LambdaExpr;
 import com.github.javaparser.utils.Pair;
 
 public class CodeHandler {
@@ -80,10 +83,9 @@ public class CodeHandler {
 
         // Parse Java files in current folder
         try (Stream<Path> paths = Files.list(Paths.get(dirPath))) {
-            paths.filter(path -> path.toString().endsWith(".java")).forEach(path -> {
-                pathQueue.add(new Pair<>(path.toString(),
-                        Paths.get(saveDirName).resolve(path.getFileName()).toString()));
-            });
+            paths.filter(path -> path.toString().endsWith(".java"))
+                    .forEach(path -> pathQueue.add(new Pair<>(path.toString(),
+                            Paths.get(saveDirName).resolve(path.getFileName()).toString())));
         } catch (IOException e) {
             e.printStackTrace();
             throw e;
@@ -91,10 +93,9 @@ public class CodeHandler {
 
         // Parse subdirectories
         try (Stream<Path> paths = Files.list(Paths.get(dirPath))) {
-            paths.filter(Files::isDirectory).forEach(path -> {
-                pathQueue.add(new Pair<>(path.toString(),
-                        Paths.get(saveDirName).resolve(path.getFileName()).toString()));
-            });
+            paths.filter(Files::isDirectory)
+                    .forEach(path -> pathQueue.add(new Pair<>(path.toString(),
+                            Paths.get(saveDirName).resolve(path.getFileName()).toString())));
         } catch (IOException e) {
             e.printStackTrace();
             throw e;
@@ -110,7 +111,7 @@ public class CodeHandler {
             cu.getAllComments().forEach(Comment::remove);
 
             // Parse again to get the new line number for each nodes
-            cu = CodeParser.parseCode(cu.toString());
+            cu = CodeParser.parseCode(cu.toString().replaceAll("[\r\n]+$", ""));
 
             // Check our visitor works correctly
             CodeParser.retrieveCode(cu);
@@ -123,7 +124,8 @@ public class CodeHandler {
     }
 
     public void saveAST(Node cu, String filePath) throws IOException {
-        NodeJson jsonFile = convertNodeToJson(cu);
+        this.nodeId = 0;
+        NodeJson jsonFile = convertNodeToJson(cu, cu.toString().split("\n"));
 
         ObjectMapper mapper = new ObjectMapper();
 
@@ -148,13 +150,37 @@ public class CodeHandler {
         }
     }
 
-    private NodeJson convertNodeToJson(Node node) {
+    private NodeJson convertNodeToJson(Node node, String[] codeLines) {
         String code = node.toString().replaceAll("[\r\n]+$", "");
+        String[] nodeCodeLines = code.split("\n");
+        Range range = node.getRange().orElse(null);
+
+        if (range != null) {
+            Position newStartPos = range.begin;
+            Position newEndPos;
+            int newEndColumn;
+
+            // Handle LambdaExpr node column mismatch, ex: (par) should be parsed as "par" not "(pa"
+            if (node instanceof Parameter && node.getParentNode().orElse(null) instanceof LambdaExpr
+                    && codeLines[newStartPos.line - 1].charAt(newStartPos.column - 1) == '(') {
+                newStartPos = new Position(newStartPos.line, newStartPos.column + 1);
+            }
+
+            if (nodeCodeLines.length == 1) {
+                newEndColumn = newStartPos.column + code.length() - 1;
+            } else {
+                newEndColumn = codeLines[newStartPos.line + nodeCodeLines.length - 1 - 1].length();
+            }
+
+            newEndPos = new Position(newStartPos.line + nodeCodeLines.length - 1, newEndColumn);
+            range = new Range(newStartPos, newEndPos);
+        }
+
         NodeJson json = new NodeJson(node.getClass().getSimpleName() + "-" + this.nodeId++,
-                node.getClass().getSimpleName(), code, node.getRange().orElse(null));
+                node.getClass().getSimpleName(), code, range);
 
         for (Node child : node.getChildNodes()) {
-            json.addNode(convertNodeToJson(child));
+            json.addNode(convertNodeToJson(child, codeLines));
         }
 
         return json;
